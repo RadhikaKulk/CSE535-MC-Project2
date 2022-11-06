@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">CameraApp</string>
+    <string-array name="categoryList">
+        <item>Landscape</item>
+        <item>Portrait</item>
+        <item>Selfie</item>
+    </string-array>
+</resources>
