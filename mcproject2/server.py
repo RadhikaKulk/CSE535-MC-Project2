@@ -7,22 +7,32 @@ import time
 import os
 from PIL import ImageGrab, Image
 import numpy as np
+import matplotlib.pyplot as plt
 
 app = flask.Flask(__name__)
-def predict_digit(img):
-    model = load_model('mnist.h5')
-    #resize image to 28x28 pixels
-    img.resize((28,28),refcheck=False)
-    img = Image.fromarray(img)
-    #convert rgb to grayscale
-    img = img.convert('L')
-    img = np.array(img)
-    #reshaping to support our model input and normalizing
-    img = img.reshape(1,28,28,1)
-    img = img/255.0
-    #predicting the class
-    res = model.predict([img])[0]
-    return np.argmax(res), max(res)
+def predict_digit(image):
+  model = load_model("/try_2.h5")
+  img_gray = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2GRAY)
+  kernel = np.ones((5, 5), np.uint8)
+  img_eroded = cv2.erode(img_gray, kernel, iterations=10)
+
+  ret, mask = cv2.threshold(img_eroded.copy(), 75, 255, cv2.THRESH_BINARY_INV)
+  contours, hierarchy = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+  #Getting the contour with maximum area
+  c = max(contours, key=cv2.contourArea)
+  x,y,w,h = cv2.boundingRect(c)
+  #Boundary for visualization
+  cv2.rectangle(image, (x,y), (x+w, y+h), color=(0, 255, 0), thickness=2)
+  #Croppping the thresholded image and adding 50 pixels as padding
+  digit = mask[max(y-50, 0):min(y+h+50, image.shape[0]), min(x-50, 0):max(x+w+50, image.shape[1])]
+  #Resizing it to match the size of training images
+  resized_digit = cv2.resize(digit, (18,18))
+  padded_digit = np.pad(resized_digit, ((5,5),(5,5)), "constant", constant_values=0)
+
+  image_to_test = np.array(padded_digit)
+  prediction = model.predict(image_to_test.reshape(1, 28, 28, 1))
+  print("Output predicted by the model:{}".format(np.argmax(prediction)))
+  return np.argmax(prediction)
 
 @app.route('/uploader', methods = ['POST'])
 def handle_request():
@@ -32,10 +42,10 @@ def handle_request():
     imgobj = image_files.read()
     npimg = np.fromstring(imgobj,np.uint8)
     img = cv2.imdecode(npimg,1)
-    predictedimage,accuracy = predict_digit(img)
+    predictedimage = predict_digit(img)
 
     current_path = os.getcwd()
-    print(predictedimage,accuracy)
+    print(predictedimage)
     upload_path = os.path.join(current_path, str(predictedimage))
     if not os.path.exists(upload_path):
         os.makedirs(upload_path)
