@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
         ActivityCompat.requestPermissions(this, new String[]{CAMERA, WRITE_EXTERNAL_STORAGE}, PackageManager.GET_PERMISSIONS);
         StrictMode.VmPolicy.Builder policyBuilder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(policyBuilder.build());
+
     }
 
     public void clickPicture(View view) throws IOException {
@@ -55,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if(requestCode == IMAGE_CAPTURED && resultCode == RESULT_OK) {
+            System.out.println("Image captured");
 
             Toast.makeText(this, "Picture Clicked!", Toast.LENGTH_LONG).show();
             Intent categorySelection = new Intent(this, CategorySelection.class);
@@ -62,5 +64,7 @@ public class MainActivity extends AppCompatActivity {
             startActivity(categorySelection);
         }
     }
+
+
 
 }
